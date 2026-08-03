@@ -604,6 +604,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_evaluation']))
             </a>
             <p class="text-muted mt-2"><small>Print this as evidence that you have completed your evaluation</small></p>
         </div>
+
+        <!-- Print My Self-Evaluation Responses - Print the actual data the staff filled in during Stage 1 -->
+        <div class="text-center mb-3">
+            <a href="print-staff-responses.php?id=<?php echo $existingEval['id']; ?>" target="_blank" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-file-alt me-2"></i>Print My Self-Evaluation Responses
+            </a>
+            <p class="text-muted mt-2"><small>Print a copy of the answers you provided during your self-evaluation submission</small></p>
+        </div>
         <?php endif; ?>
 
         <!-- Staff Review Section - Show when Supervising Officer has evaluated and passed to staff -->
