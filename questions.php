@@ -74,10 +74,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $questionLabel = !empty($_POST['question_label']) ? sanitize($_POST['question_label']) : null;
         $questionOrder = intval($_POST['question_order'] ?? 0);
 
+        // Determine category_order for this category.
+        // If the category has no existing rows, assign the next available slot so it doesn't fall back to alphabetical order.
+        $categoryOrder = null;
+        $checkStmt = $pdo->prepare("SELECT category_order FROM evaluation_questions WHERE category = ? AND category_order IS NOT NULL LIMIT 1");
+        $checkStmt->execute([$category]);
+        $existingOrder = $checkStmt->fetchColumn();
+        if ($existingOrder !== false && $existingOrder !== null) {
+            $categoryOrder = (int)$existingOrder;
+        } else {
+            // No existing order for this category — give it the next slot (max + 10, or 10 if table is empty)
+            $maxOrder = (int)$pdo->query("SELECT COALESCE(MAX(category_order), 0) FROM evaluation_questions")->fetchColumn();
+            $categoryOrder = $maxOrder + 10;
+        }
+
         // Build query based on available columns
         if ($hasQuestionLabel) {
             // Full query with all new columns
-            $stmt = $pdo->prepare("INSERT INTO evaluation_questions (category, sub_category, question_text, question_type, options, target_staff_category, allowed_file_types, max_file_size, question_group, question_label, question_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO evaluation_questions (category, sub_category, question_text, question_type, options, target_staff_category, allowed_file_types, max_file_size, question_group, question_label, question_order, category_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $category,
                 $subCategory,
@@ -89,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $maxFileSize,
                 $questionGroup,
                 $questionLabel,
-                $questionOrder
+                $questionOrder,
+                $categoryOrder
             ]);
         } elseif ($hasSubCategory) {
             $stmt = $pdo->prepare("INSERT INTO evaluation_questions (category, sub_category, question_text, question_type, options, target_staff_category) VALUES (?, ?, ?, ?, ?, ?)");
